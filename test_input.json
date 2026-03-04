@@ -1,0 +1,9 @@
+{
+  "input": {
+    "prompt": "A majestic dragon soaring through clouds at sunset, scales shimmering with iridescent colors, detailed fantasy art style",
+    "height": 1024,
+    "width": 1024,
+    "num_inference_steps": 10,
+    "seed": 42
+  }
+}
