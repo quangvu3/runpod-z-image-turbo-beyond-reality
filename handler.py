@@ -1,5 +1,6 @@
 import runpod
 import torch
+import random
 import base64
 from io import BytesIO
 from diffusers import ZImagePipeline, ZImageTransformer2DModel
@@ -23,7 +24,9 @@ def handler(event):
     height = inp.get("height", 1024)
     width = inp.get("width", 1024)
     num_inference_steps = inp.get("num_inference_steps", 10)
-    seed = inp.get("seed", 42)
+    seed = inp.get("seed", -1)
+    if seed == -1:
+        seed = random.randint(0, 2**32 - 1)
 
     generator = torch.Generator("cuda").manual_seed(seed)
     image = pipe(
