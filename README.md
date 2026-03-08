@@ -1,74 +1,65 @@
-# Z-Image-Turbo Beyond Reality — RunPod Serverless
+# Z-Image-Turbo Beyond Reality — vllm-omni Server
 
-RunPod serverless worker for the [Z-Image-Turbo-Realism](https://huggingface.co/spaces/linoyts/Z-Image-Turbo-Realism) image generation model. Generates high-quality images from text prompts using a 6B parameter diffusion model (DiT architecture) in 8-10 inference steps.
+OpenAI-compatible text-to-image server for the [Z-Image-Turbo-Realism](https://huggingface.co/spaces/linoyts/Z-Image-Turbo-Realism) model, powered by [vllm-omni](https://github.com/quangvu3/vllm-omni).
 
 ## Quick Start
 
 ### Build
 
 ```bash
-docker build --platform linux/amd64 -t <your-registry>/z-image-runpod:latest .
+docker build --platform linux/amd64 -t <your-registry>/z-image-vllm:latest .
 ```
 
-If the models are gated, pass a Hugging Face token:
+### Run Locally
 
 ```bash
-echo "hf_xxxxxxxxxxxx" > /tmp/hf_token.txt
-docker build --platform linux/amd64 \
-  --secret id=HF_TOKEN,src=/tmp/hf_token.txt \
-  -t <your-registry>/z-image-runpod:latest .
+docker run --gpus all -p 8000:8000 <your-registry>/z-image-vllm:latest
 ```
 
-### Test Locally
+### Test
 
 ```bash
-docker run --gpus all -p 8080:8080 <your-registry>/z-image-runpod:latest
-
-# In another terminal
-curl -s -X POST http://localhost:8080/runsync \
+curl http://localhost:8000/v1/images/generations \
   -H "Content-Type: application/json" \
-  -d @test_input.json | jq -r '.output.image' | base64 -d > output.png
+  -d '{"prompt": "A beautiful landscape at golden hour, photorealistic", "n": 1}'
 ```
 
 ### Deploy to RunPod
 
 ```bash
-docker push <your-registry>/z-image-runpod:latest
+docker push <your-registry>/z-image-vllm:latest
 ```
 
-Then create a **Serverless Endpoint** in the [RunPod Console](https://www.runpod.io/console/serverless) with a 48GB GPU (A6000 or L40S).
+Then create a **Pod** or **Serverless Endpoint** in the [RunPod Console](https://www.runpod.io/console) with a 48GB GPU (A6000 or L40S), exposing port `8000`.
+
+## Configuration
+
+Override defaults via environment variables at runtime:
+
+| Variable | Default | Description |
+|---|---|---|
+| `MODEL` | `Tongyi-MAI/Z-Image-Turbo` | Base pipeline model |
+| `TRANSFORMER_MODEL` | `linoyts/beyond-reality-z-image-diffusers` | Fine-tuned transformer |
+| `PORT` | `8000` | HTTP server port |
+
+```bash
+docker run --gpus all -p 8000:8000 \
+  -e MODEL=Tongyi-MAI/Z-Image-Turbo \
+  -e TRANSFORMER_MODEL=linoyts/beyond-reality-z-image-diffusers \
+  <your-registry>/z-image-vllm:latest
+```
 
 ## API
 
-### Request
+OpenAI-compatible `/v1/images/generations` endpoint:
 
-```json
-{
-  "input": {
-    "prompt": "A beautiful landscape at golden hour, photorealistic",
-    "height": 1024,
-    "width": 1024,
-    "num_inference_steps": 10,
-    "seed": 42
-  }
-}
-```
-
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `prompt` | string | *required* | Text description of the image |
-| `height` | int | 1024 | Image height (512-2048) |
-| `width` | int | 1024 | Image width (512-2048) |
-| `num_inference_steps` | int | 10 | Denoising steps |
-| `seed` | int | 42 | Random seed |
-
-### Response
-
-```json
-{
-  "image": "<base64 PNG>",
-  "seed": 42
-}
+```bash
+curl http://localhost:8000/v1/images/generations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "A cyberpunk city at night, neon lights reflecting on wet streets",
+    "n": 1
+  }'
 ```
 
 ## Model Details
@@ -77,6 +68,6 @@ Then create a **Serverless Endpoint** in the [RunPod Console](https://www.runpod
 |---|---|
 | Pipeline | [`Tongyi-MAI/Z-Image-Turbo`](https://huggingface.co/Tongyi-MAI/Z-Image-Turbo) |
 | Transformer | [`linoyts/beyond-reality-z-image-diffusers`](https://huggingface.co/linoyts/beyond-reality-z-image-diffusers) |
-| Precision | bfloat16 (~16GB VRAM) |
+| Serving | [vllm-omni](https://github.com/quangvu3/vllm-omni) |
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for full deployment guide and troubleshooting.

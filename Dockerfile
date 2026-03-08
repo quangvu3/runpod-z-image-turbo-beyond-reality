@@ -1,18 +1,15 @@
-FROM runpod/base:0.6.2-cuda12.2.0
+FROM runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404
 
-# Install Python dependencies
-COPY requirements.txt /requirements.txt
-RUN python3 -m pip install --no-cache-dir -r /requirements.txt
+# Install vllm (base package)
+RUN pip install --no-cache-dir vllm
 
-# Download and cache models at build time
-RUN --mount=type=secret,id=HF_TOKEN,required=false \
-    HF_TOKEN=$(cat /run/secrets/HF_TOKEN 2>/dev/null || echo "") && \
-    export HF_TOKEN && \
-    python3 -c "\
-from diffusers import ZImagePipeline, ZImageTransformer2DModel; \
-import torch; \
-ZImageTransformer2DModel.from_pretrained('linoyts/beyond-reality-z-image-diffusers', torch_dtype=torch.bfloat16); \
-ZImagePipeline.from_pretrained('Tongyi-MAI/Z-Image-Turbo', torch_dtype=torch.bfloat16)"
+# Install vllm-omni (adds --omni text-to-image serving)
+RUN pip install --no-cache-dir git+https://github.com/quangvu3/vllm-omni
 
-COPY handler.py /handler.py
-CMD ["python3", "/handler.py"]
+# Copy the startup script
+COPY run_server.sh /run_server.sh
+RUN chmod +x /run_server.sh
+
+EXPOSE 8000
+
+CMD ["/run_server.sh"]
