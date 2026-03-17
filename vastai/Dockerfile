@@ -1,12 +1,4 @@
-FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04
-
-# Install Python and system deps
-RUN apt-get update && apt-get install -y \
-    python3 python3-pip git curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install PyTorch 2.8.0 with CUDA 12.8
-RUN pip install --no-cache-dir torch==2.8.0 --index-url https://download.pytorch.org/whl/cu128
+FROM runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404
 
 # Install vllm (base package) and hf_transfer (fast HuggingFace downloads)
 RUN pip install --no-cache-dir vllm hf_transfer
