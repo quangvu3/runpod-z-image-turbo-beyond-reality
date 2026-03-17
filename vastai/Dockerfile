@@ -7,7 +7,7 @@ RUN pip install --no-cache-dir vllm hf_transfer
 RUN pip install --no-cache-dir git+https://github.com/quangvu3/vllm-omni
 
 # Install Vast.ai PyWorker (HTTP proxy between Vast routing layer and vllm)
-RUN pip install --no-cache-dir vast-pyworker
+RUN pip install --no-cache-dir git+https://github.com/vast-ai/vast-pyworker
 
 # Copy application files
 COPY worker.py /worker.py
