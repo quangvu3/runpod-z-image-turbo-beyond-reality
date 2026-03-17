@@ -6,8 +6,10 @@ RUN pip install --no-cache-dir vllm hf_transfer
 # Install vllm-omni (adds --omni text-to-image serving)
 RUN pip install --no-cache-dir git+https://github.com/quangvu3/vllm-omni
 
-# Install Vast.ai PyWorker (HTTP proxy between Vast routing layer and vllm)
-RUN pip install --no-cache-dir git+https://github.com/vast-ai/vast-pyworker
+# Clone Vast.ai PyWorker (not a pip package; install dependencies manually)
+RUN git clone --depth=1 https://github.com/vast-ai/vast-pyworker /vast-pyworker
+RUN pip install --no-cache-dir -r /vast-pyworker/requirements.txt || true
+ENV PYTHONPATH="/vast-pyworker:${PYTHONPATH}"
 
 # Copy application files
 COPY worker.py /worker.py
